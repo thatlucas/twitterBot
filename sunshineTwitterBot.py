@@ -152,7 +152,7 @@ keys.close()
 t = Twitter(
 auth=OAuth(access_token, access_token_secret, cons_key, cons_secret))
 
-f_loc = os.getcwd()+'/last_seen_id.txt','r')
+f_loc = os.getcwd()+'/last_seen_id.txt'
 id_file = open(f_loc,'r')
 last_id = id_file.readline()
 id_file.close()
