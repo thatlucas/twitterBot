@@ -9,6 +9,7 @@ https://github.com/newsapps/ilcampaignfinance
 
 from twitter import *
 import sys
+import os
 import requests
 from bs4 import BeautifulSoup
 import feedparser
@@ -139,8 +140,8 @@ def _process_b1_page(soups, url, report_id, report_date):
         )
     return b1_list
 
-
-keys = open('twt_keys.txt')
+f_loc = os.getcwd()+'/twt_keys.txt'
+keys = open(f_loc,'r')
 cons_key = keys.readline().strip('\n').strip("'")
 cons_secret = keys.readline().strip('\n').strip("'")
 access_token = keys.readline().strip('\n').strip("'")
@@ -151,11 +152,11 @@ keys.close()
 t = Twitter(
 auth=OAuth(access_token, access_token_secret, cons_key, cons_secret))
 
-
-id_file = open('last_seen_id.txt','r')
+f_loc = os.getcwd()+'/last_seen_id.txt','r')
+id_file = open(f_loc,'r')
 last_id = id_file.readline()
 id_file.close()
-id_file = open('last_seen_id.txt','w')
+id_file = open(f_loc,'w')
 first_id = True
 print 'Looking for recent reports, and printing out details'
 for report in scrape_reports_filed():
