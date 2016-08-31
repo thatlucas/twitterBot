@@ -10,6 +10,7 @@ https://github.com/newsapps/ilcampaignfinance
 from twitter import *
 import sys
 import os
+import time
 import requests
 from bs4 import BeautifulSoup
 import feedparser
@@ -35,6 +36,7 @@ def scrape_reports_filed(reports_url=ISBE_REPORTS_FEED):
             continue
         report_url = f['links'][0]['href']
         parsed_url = urlparse.parse_qs(urlparse.urlparse(report_url).query)
+#        print parsed_url
         if report_url.startswith(
                 'http://www.elections.il.gov/CampaignDisclosure/A1'):
             report_type = 'A1'
@@ -50,8 +52,10 @@ def scrape_reports_filed(reports_url=ISBE_REPORTS_FEED):
             'report_id': report_id,
             'report_type': report_type,
             'report_url': report_url,
-            'report_date': report_date
+            'report_date': report_date,
+            'post_date': f['published_parsed']
         })
+#        print reports_list
     return reports_list
 
 
@@ -152,19 +156,22 @@ keys.close()
 t = Twitter(
 auth=OAuth(access_token, access_token_secret, cons_key, cons_secret))
 
-f_loc = os.getcwd()+'/last_seen_id.txt'
-id_file = open(f_loc,'r')
-last_id = id_file.readline()
-id_file.close()
-id_file = open(f_loc,'w')
-first_id = True
+f_loc = os.getcwd()+'/last_seen_time.txt'
+time_file = open(f_loc,'r')
+str_time = time_file.readline()
+last_time = time.strptime(str_time,'%Y-%m-%d %H:%M:%S')
+time_file.close()
+time_file = open(f_loc,'w')
+first_time = True
 print 'Looking for recent reports, and printing out details'
 for report in scrape_reports_filed():
-    if first_id:
-        id_file.write(report['report_id'])
-        id_file.close()
-        first_id = False
-    if report['report_id'] == str(last_id):
+    if first_time:
+        str_time = time.strftime('%Y-%m-%d %H:%M:%S', report['post_date'])
+        time_file.write(str_time)
+        time_file.close()
+        first_time = False
+    if report['post_date'] < last_time:
+        print 'time passed'        
         break
     if report['report_type'] == 'A1':
         _out =  scrape_a1(\
@@ -175,12 +182,15 @@ for report in scrape_reports_filed():
         for con in _out[1]:
             moni = moni+float(con[1:].replace(',',''))
         moni_str = str(moni)
-        if len(moni_str) > 9:
-            moni_str = moni_str[:-9]+','+moni_str[-9:-6]+','+moni_str[-6:-3]
-        elif len(moni_str) > 6:
-            moni_str = moni_str[:-6]+','+moni_str[-6:-3]
+        m = moni_str.split('.')
+        moni_str = m[0]
+        if len(moni_str) > 6:
+            moni_str = moni_str[:-6]+','+moni_str[-6:-3]+','+moni_str[-3:]
+        elif len(moni_str) > 3:
+            moni_str = moni_str[:-3]+','+moni_str[-3:]
         tweet_str = '$%s A1: to %s\n%s' %\
             (moni_str,_out[0],report['report_url'])
+        print tweet_str
         t.statuses.update(status=tweet_str)
     elif report['report_type'] == 'B1':
         _out = scrape_b1(
@@ -200,5 +210,4 @@ for report in scrape_reports_filed():
             else:
                 tweet_str = tweet_str+_out[j][7]
         t.statuses.update(status=tweet_str)
-
 
