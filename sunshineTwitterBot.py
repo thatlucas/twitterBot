@@ -67,7 +67,7 @@ def scrape_a1(report_id, report_url, report_date):
     to extract from the body of the A1 report itself.
     """
     req = requests.get(report_url)
-    soups = [BeautifulSoup(req.text)]
+    soups = [BeautifulSoup(req.text),"html5lib"]
     a1_list = _process_a1_page(soups,report_url,report_id,report_date)
     return a1_list
     
@@ -80,7 +80,7 @@ def scrape_b1(report_id, report_url, report_date):
     to extract from the body of the A1 report itself.
     """
     req = requests.get(report_url)
-    soups = [BeautifulSoup(req.text)]
+    soups = [BeautifulSoup(req.text),"html5lib"]
     b1_list = _process_b1_page(soups, report_url, report_id, report_date)  
     return b1_list
         
@@ -144,12 +144,12 @@ def _process_b1_page(soups, url, report_id, report_date):
         )
     return b1_list
 
-f_loc = os.getcwd()+'/twt_keys.txt'
+f_loc = os.getcwd()+'/twt_keys.lt.txt'
 keys = open(f_loc,'r')
-cons_key = keys.readline().strip('\n').strip("'")
-cons_secret = keys.readline().strip('\n').strip("'")
-access_token = keys.readline().strip('\n').strip("'")
-access_token_secret = keys.readline().strip('\n').strip("'")
+cons_key = keys.readline().strip()
+cons_secret = keys.readline().strip()
+access_token = keys.readline().strip()
+access_token_secret = keys.readline().strip()
 keys.close()
 
 
@@ -158,21 +158,31 @@ auth=OAuth(access_token, access_token_secret, cons_key, cons_secret))
 
 f_loc = os.getcwd()+'/last_seen_time.txt'
 time_file = open(f_loc,'r')
-str_time = time_file.readline()
+str_time = time_file.readline().strip()
 last_time = time.strptime(str_time,'%Y-%m-%d %H:%M:%S')
 time_file.close()
+llt = list(last_time)
+llt = llt[:-1]
+llt.append(0)
+last_time = time.struct_time(tuple(llt))
 time_file = open(f_loc,'w')
 first_time = True
+i = 0
 print 'Looking for recent reports, and printing out details'
 for report in scrape_reports_filed():
+    i+=1
+    if i>100:
+        break
     if first_time:
         str_time = time.strftime('%Y-%m-%d %H:%M:%S', report['post_date'])
         time_file.write(str_time)
         time_file.close()
         first_time = False
-    if report['post_date'] < last_time:
+    if report['post_date'] <= last_time:
         print 'time passed'        
         break
+    print report['post_date']
+    print last_time
     if report['report_type'] == 'A1':
         _out =  scrape_a1(\
             report['report_id'],
@@ -210,4 +220,3 @@ for report in scrape_reports_filed():
             else:
                 tweet_str = tweet_str+_out[j][7]
         t.statuses.update(status=tweet_str)
-
