@@ -144,7 +144,7 @@ def _process_b1_page(soups, url, report_id, report_date):
         )
     return b1_list
 
-f_loc = os.getcwd()+'/twt_keys.lt.txt'
+f_loc = os.getcwd()+'twt_keys.lt.txt'
 keys = open(f_loc,'r')
 cons_key = keys.readline().strip()
 cons_secret = keys.readline().strip()
@@ -156,7 +156,7 @@ keys.close()
 t = Twitter(
 auth=OAuth(access_token, access_token_secret, cons_key, cons_secret))
 
-f_loc = os.getcwd()+'/last_seen_time.txt'
+f_loc = os.getcwd()+'last_seen_time.txt'
 time_file = open(f_loc,'r')
 str_time = time_file.readline().strip()
 last_time = time.strptime(str_time,'%Y-%m-%d %H:%M:%S')
