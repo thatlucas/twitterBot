@@ -146,7 +146,7 @@ def _process_b1_page(soups, url, report_id, report_date):
 
 f_loc = os.getcwd()+'/log.txt'
 logfile = open(f_loc,'w')
-logfile.write('log written at %s\n' % (time.ctime())
+logfile.write('log written at %s\n' % (time.ctime()))
 
 f_loc = os.getcwd()+'/twt_keys.txt'
 keys = open(f_loc,'r')
