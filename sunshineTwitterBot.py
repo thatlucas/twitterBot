@@ -146,6 +146,7 @@ def _process_b1_page(soups, url, report_id, report_date):
 
 f_loc = os.getcwd()+'/log.txt'
 logfile = open(f_loc,'w')
+logfile.write('log written at %s\n' % (time.ctime())
 
 f_loc = os.getcwd()+'/twt_keys.txt'
 keys = open(f_loc,'r')
@@ -227,3 +228,4 @@ for report in scrape_reports_filed():
             else:
                 tweet_str = tweet_str+_out[j][7]
         t.statuses.update(status=tweet_str)
+logfile.close()
