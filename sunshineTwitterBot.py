@@ -144,6 +144,9 @@ def _process_b1_page(soups, url, report_id, report_date):
         )
     return b1_list
 
+f_loc = os.getcwd()+'/log.txt'
+logfile = open(f_loc,'w')
+
 f_loc = os.getcwd()+'/twt_keys.txt'
 keys = open(f_loc,'r')
 cons_key = keys.readline().strip()
@@ -151,7 +154,6 @@ cons_secret = keys.readline().strip()
 access_token = keys.readline().strip()
 access_token_secret = keys.readline().strip()
 keys.close()
-
 
 t = Twitter(
 auth=OAuth(access_token, access_token_secret, cons_key, cons_secret))
@@ -165,24 +167,30 @@ llt = list(last_time)
 llt = llt[:-1]
 llt.append(0)
 last_time = time.struct_time(tuple(llt))
+logfile.write('time from file: ')
+logfile.write(str(last_time))
 time_file = open(f_loc,'w')
 first_time = True
 i = 0
-print 'Looking for recent reports, and printing out details'
+logfile.write('\n\nLooking for recent reports, and printing out details\n\n')
 for report in scrape_reports_filed():
     i+=1
+    logfile.write('interation count: %d\n'%(i))
     if i>100:
         break
     if first_time:
         str_time = time.strftime('%Y-%m-%d %H:%M:%S', report['post_date'])
+        logfile.write('%s updated to %s\n' % (f_loc,str_time))
         time_file.write(str_time)
         time_file.close()
         first_time = False
     if report['post_date'] <= last_time:
-        print 'time passed'        
+        logfile.write('time passed with %s\n' % \
+            (time.strftime('%Y-%m-%d %H:%M:%S', report['post_date'])) )       
         break
-    print report['post_date']
-    print last_time
+    logfile.write('%s <= %s is %s\n' % \
+        (str(report['post_date']),str(last_time) \
+        ,str(report['post_date']<=last_time)))
     if report['report_type'] == 'A1':
         _out =  scrape_a1(\
             report['report_id'],
@@ -200,7 +208,6 @@ for report in scrape_reports_filed():
             moni_str = moni_str[:-3]+','+moni_str[-3:]
         tweet_str = '$%s A1: to %s\n%s' %\
             (moni_str,_out[0],report['report_url'])
-        print tweet_str
         t.statuses.update(status=tweet_str)
     elif report['report_type'] == 'B1':
         _out = scrape_b1(
