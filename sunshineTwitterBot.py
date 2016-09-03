@@ -222,7 +222,13 @@ with open(f_loc,'w') as logfile:
                 tweet_str = tweet_str+'\n'+report['report_url']
             tweet_str = tweet_str.encode('utf-8')
             logfile.write(tweet_str+'\n')
-            t.statuses.update(status=tweet_str)
+            try:
+                t.statuses.update(status=tweet_str)
+            except:
+                with open('bad_tweet.txt','w') as bt:
+                    bt.write(tweet_str+'\n')
+                    for r in report:
+                        print(str(r))
         elif report['report_type'] == 'B1':
             _out = scrape_b1(
                 report['report_id'],
@@ -242,5 +248,11 @@ with open(f_loc,'w') as logfile:
                     tweet_str = tweet_str+_out[j][7]
             tweet_str = tweet_str.encode('utf-8')
             logfile.write(tweet_str+'\n')
-            t.statuses.update(status=tweet_str)
+            try:
+                t.statuses.update(status=tweet_str)
+            except:
+                with open('bad_tweet.txt','w') as bt:
+                    bt.write(tweet_str+'\n')
+                    for r in report:
+                        print(str(r))
     logfile.write('\n\nexiting program')
