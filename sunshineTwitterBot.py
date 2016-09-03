@@ -145,87 +145,102 @@ def _process_b1_page(soups, url, report_id, report_date):
     return b1_list
 
 f_loc = os.getcwd()+'/log.txt'
-logfile = open(f_loc,'w')
-logfile.write('log written at %s\n' % (time.ctime()))
-
-f_loc = os.getcwd()+'/twt_keys.txt'
-keys = open(f_loc,'r')
-cons_key = keys.readline().strip()
-cons_secret = keys.readline().strip()
-access_token = keys.readline().strip()
-access_token_secret = keys.readline().strip()
-keys.close()
-
-t = Twitter(
-auth=OAuth(access_token, access_token_secret, cons_key, cons_secret))
-
-f_loc = os.getcwd()+'/last_seen_time.txt'
-time_file = open(f_loc,'r')
-str_time = time_file.readline().strip()
-last_time = time.strptime(str_time,'%Y-%m-%d %H:%M:%S')
-time_file.close()
-llt = list(last_time)
-llt = llt[:-1]
-llt.append(0)
-last_time = time.struct_time(tuple(llt))
-logfile.write('time from file: ')
-logfile.write(str(last_time))
-time_file = open(f_loc,'w')
-first_time = True
-i = 0
-logfile.write('\n\nLooking for recent reports, and printing out details\n\n')
-for report in scrape_reports_filed():
-    i+=1
-    logfile.write('interation count: %d\n'%(i))
-    if i>100:
-        break
-    if first_time:
-        str_time = time.strftime('%Y-%m-%d %H:%M:%S', report['post_date'])
-        logfile.write('%s updated to %s\n' % (f_loc,str_time))
-        time_file.write(str_time)
-        time_file.close()
-        first_time = False
-    if report['post_date'] <= last_time:
-        logfile.write('time passed with %s\n' % \
-            (time.strftime('%Y-%m-%d %H:%M:%S', report['post_date'])) )       
-        break
-    logfile.write('%s <= %s is %s\n' % \
-        (str(report['post_date']),str(last_time) \
-        ,str(report['post_date']<=last_time)))
-    if report['report_type'] == 'A1':
-        _out =  scrape_a1(\
-            report['report_id'],
-            report['report_url'],
-            report['report_date'])
-        moni = 0
-        for con in _out[1]:
-            moni = moni+float(con[1:].replace(',',''))
-        moni_str = str(moni)
-        m = moni_str.split('.')
-        moni_str = m[0]
-        if len(moni_str) > 6:
-            moni_str = moni_str[:-6]+','+moni_str[-6:-3]+','+moni_str[-3:]
-        elif len(moni_str) > 3:
-            moni_str = moni_str[:-3]+','+moni_str[-3:]
-        tweet_str = '$%s A1: to %s\n%s' %\
-            (moni_str,_out[0],report['report_url'])
-        t.statuses.update(status=tweet_str)
-    elif report['report_type'] == 'B1':
-        _out = scrape_b1(
-            report['report_id'],
-            report['report_url'],
-            report['report_date'])
-        for j in range(len(_out)):
-            so = _out[j][4].lower()[0:4]
-            if so[0] == 'o':
-                so = so[0:3]
-            so = so+'.'
-            tweet_str = '%s B1: %s %s for %s from %s.\n'\
-                        % (_out[j][1][:-3],so,_out[j][5],\
-                        _out[j][6],_out[j][0])
+with open(f_loc,'w') as logfile:
+    logfile.write('log written at %s\n' % (time.ctime()))
+    
+    f_loc = os.getcwd()+'/twt_keys.txt'
+    with open(f_loc,'r') as keys:
+        cons_key = keys.readline().strip()
+        cons_secret = keys.readline().strip()
+        access_token = keys.readline().strip()
+        access_token_secret = keys.readline().strip()
+    
+    t = Twitter(
+    auth=OAuth(access_token, access_token_secret, cons_key, cons_secret))
+    
+    f_loc = os.getcwd()+'/last_seen_time.txt'
+    with open(f_loc,'r') as time_file:
+        str_time = time_file.readline().strip()
+        try:
+            last_time = time.strptime(str_time,'%Y-%m-%d %H:%M:%S')
+        except:
+            logfile.write('missing last_seen_time; setting new last_seen_time to current time\n')
+            last_time = time.gmtime()
+    llt = list(last_time)
+    llt = llt[:-1]
+    llt.append(0)
+    last_time = time.struct_time(tuple(llt))
+    logfile.write('time from file: ')
+    logfile.write(str(last_time))
+    first_time = True
+    i = 0
+    logfile.write('\n\nLooking for recent reports, and printing out details\n\n')
+    for report in scrape_reports_filed():
+        i+=1
+        logfile.write('interation count: %d\n'%(i))
+        if i>100:
+            break
+        if first_time:
+            with open(f_loc,'w') as time_file:
+                try:
+                    str_time = time.strftime('%Y-%m-%d %H:%M:%S', report['post_date'])
+                    logfile.write('%s updated to %s\n' % (f_loc,str_time))
+                except:
+                    logfile.write('report missing timestamp "%s"; using current\n' % (str(report['post_date'])))
+                    for r in report:
+                        logfile.write(str(r))
+                    report['post_date'] = time.gmtime()
+                time_file.write(str_time)
+            first_time = False
+        if report['post_date'] <= last_time:
+            logfile.write('time passed with %s\n' % \
+                (time.strftime('%Y-%m-%d %H:%M:%S', report['post_date'])) )       
+            break
+        logfile.write('%s <= %s is %s\n' % \
+            (str(report['post_date']),str(last_time) \
+            ,str(report['post_date']<=last_time)))
+        if report['report_type'] == 'A1':
+            _out =  scrape_a1(\
+                report['report_id'],
+                report['report_url'],
+                report['report_date'])
+            moni = 0
+            for con in _out[1]:
+                moni = moni+float(con[1:].replace(',',''))
+            moni_str = str(moni)
+            m = moni_str.split('.')
+            moni_str = m[0]
+            if len(moni_str) > 6:
+                moni_str = moni_str[:-6]+','+moni_str[-6:-3]+','+moni_str[-3:]
+            elif len(moni_str) > 3:
+                moni_str = moni_str[:-3]+','+moni_str[-3:]
+            tweet_str = '$%s A1: to %s' %\
+                (moni_str,_out[0])
             if len(tweet_str)>112:
-                tweet_str = tweet_str[:105]+'...\n'+_out[j][7]
+                tweet_str = tweet_str[:105]+'...\n'+report['report_url']
             else:
-                tweet_str = tweet_str+_out[j][7]
-        t.statuses.update(status=tweet_str)
-logfile.close()
+                tweet_str = tweet_str+'\n'+report['report_url']
+            tweet_str = tweet_str.encode('utf-8')
+            logfile.write(tweet_str+'\n')
+            t.statuses.update(status=tweet_str)
+        elif report['report_type'] == 'B1':
+            _out = scrape_b1(
+                report['report_id'],
+                report['report_url'],
+                report['report_date'])
+            for j in range(len(_out)):
+                so = _out[j][4].lower()[0:4]
+                if so[0] == 'o':
+                    so = so[0:3]
+                so = so+'.'
+                tweet_str = '%s B1: %s %s for %s from %s.\n'\
+                            % (_out[j][1][:-3],so,_out[j][5],\
+                            _out[j][6],_out[j][0])
+                if len(tweet_str)>112:
+                    tweet_str = tweet_str[:105]+'...\n'+_out[j][7]
+                else:
+                    tweet_str = tweet_str+_out[j][7]
+            tweet_str = tweet_str.encode('utf-8')
+            logfile.write(tweet_str+'\n')
+            t.statuses.update(status=tweet_str)
+    logfile.write('\n\nexiting program')
