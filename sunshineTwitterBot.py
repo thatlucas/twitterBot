@@ -228,7 +228,7 @@ with open(f_loc,'w') as logfile:
                 with open('bad_tweet.txt','w') as bt:
                     bt.write(tweet_str+'\n')
                     for r in report:
-                        print(str(r))
+                        bt.write(str(report[r]))
         elif report['report_type'] == 'B1':
             _out = scrape_b1(
                 report['report_id'],
@@ -254,5 +254,5 @@ with open(f_loc,'w') as logfile:
                 with open('bad_tweet.txt','w') as bt:
                     bt.write(tweet_str+'\n')
                     for r in report:
-                        print(str(r))
+                        bt.write(str(report[r]))
     logfile.write('\n\nexiting program')
