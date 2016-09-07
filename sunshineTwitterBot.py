@@ -58,6 +58,28 @@ def scrape_reports_filed(reports_url=ISBE_REPORTS_FEED):
 #        print reports_list
     return reports_list
 
+def page_index(page_n,report_type):
+    """
+    Get salted page index
+    """
+    key = ''
+    if report_type.lower() == 'a1':
+        typ = 1
+    elif report_type.lower() == 'b1':
+        typ = 2
+    else:
+        print 'error in page_index(): unrecognized report_type'
+        sys.exit()
+    with open('SBEHash.csv','r') as hash_file:
+        first_line = True
+        for line in hash_file.readlines():
+            if first_line:
+                first_line = False
+            else:
+                if line.split(',')[0] == str(page_n):
+                    key = line.split(',')[typ]
+                    break
+    return key
 
 # Scraper interfaces for specific report types
 def scrape_a1(report_id, report_url, report_date):
@@ -67,8 +89,20 @@ def scrape_a1(report_id, report_url, report_date):
     to extract from the body of the A1 report itself.
     """
     req = requests.get(report_url)
-    soups = [BeautifulSoup(req.text),"html5lib"]
-    a1_list = _process_a1_page(soups,report_url,report_id,report_date)
+    soups = [BeautifulSoup(req.text,"html5lib")]
+    rec_counts = soups[0].findAll('span',id='ctl00_ContentPlaceHolder1_lbRecordsInfo')[0]
+    n1 = int(rec_counts.contents[0].split(' ')[-3])
+    n2 = int(rec_counts.contents[0].split(' ')[-1])
+    page_count = n2/n1+(n2%n1>0)
+    for page in range(1,page_count+1):
+        if page == 1:
+            a1_list = _process_a1_page(soups,report_url,report_id,report_date)
+        else:
+            page_url = '%s&pageindex=%s' % (report_url,page_index(page,'a1'))
+            req = requests.get(page_url)
+            soups = [BeautifulSoup(req.text,"html5lib")]
+            a1 = _process_a1_page(soups,page_url,report_id,report_date)
+            a1_list = [a1_list[0],a1_list[1]+a1[1]]
     return a1_list
     
         
@@ -76,12 +110,24 @@ def scrape_a1(report_id, report_url, report_date):
 def scrape_b1(report_id, report_url, report_date):
     """
     Given a report_id, attempts to download it and scrape it.
-    Unlike with D2s, we need the URL and date up front, because they're tougher
-    to extract from the body of the A1 report itself.
     """
     req = requests.get(report_url)
-    soups = [BeautifulSoup(req.text),"html5lib"]
-    b1_list = _process_b1_page(soups, report_url, report_id, report_date)  
+    soups = [BeautifulSoup(req.text,"html5lib")]
+    rec_counts = soups[0].findAll('span',id='ctl00_ContentPlaceHolder1_lbRecordsInfo')[0]
+#    sys.exit()
+    n1 = int(rec_counts.contents[0].split(' ')[-3])
+    n2 = int(rec_counts.contents[0].split(' ')[-1])
+    page_count = n2/n1+(n2%n1>0)
+    for page in range(1,page_count+1):
+        if page == 1:
+            b1_list = _process_b1_page(soups,report_url,report_id,report_date) 
+        else:
+            page_url = '%s&pageindex=%s'%(report_url,page_index(page,'b1'))
+            req = requests.get(page_url)
+            soups = [BeautifulSoup(req.text,"html5lib")]
+            b1 = _process_b1_page(soups,page_url,report_id,report_date)
+            for b in b1:
+                b1_list.append(b)
     return b1_list
         
 
@@ -93,16 +139,16 @@ def _process_a1_page(soups, url, report_id, report_date):
     """
     amt = []
     date = []
+    cmte_name = ''    
     name = soups[0].findAll('span', id='ctl00_ContentPlaceHolder1_lblName')
-    if name:
+    if name[0].contents:
         cmte_name = name[0].contents[0]
     a1_list = []
     for f in soups[0].findAll('td', 'tdA1List'):
         if 'thA1Amount' in f['headers'][0]:
             amt.append(f.findAll('span')[0].contents[0])  
-            date.append(f.findAll('span')[0].contents[2]) 
-#    if report['report_id']=='625680': sys.exit()        
-    a1_list = [cmte_name,amt,date]
+            date.append(f.findAll('span')[0].contents[2])       
+    a1_list = [cmte_name,amt]
     return a1_list
         
 
@@ -143,6 +189,7 @@ def _process_b1_page(soups, url, report_id, report_date):
             ,supp[i],cand[i],off[i],url]\
         )
     return b1_list
+    
 
 f_loc = os.getcwd()+'/log.txt'
 with open(f_loc,'w') as logfile:
@@ -228,7 +275,7 @@ with open(f_loc,'w') as logfile:
                 with open('bad_tweet.txt','w') as bt:
                     bt.write(tweet_str+'\n')
                     for r in report:
-                        bt.write(str(report[r]))
+                        print(str(r))
         elif report['report_type'] == 'B1':
             _out = scrape_b1(
                 report['report_id'],
@@ -254,5 +301,5 @@ with open(f_loc,'w') as logfile:
                 with open('bad_tweet.txt','w') as bt:
                     bt.write(tweet_str+'\n')
                     for r in report:
-                        bt.write(str(report[r]))
+                        print(str(r))
     logfile.write('\n\nexiting program')
