@@ -70,7 +70,8 @@ def page_index(page_n,report_type):
     else:
         print 'error in page_index(): unrecognized report_type'
         sys.exit()
-    with open('SBEHash.csv','r') as hash_file:
+    f_loc = os.getcwd()+'/SBEHash.txt'
+    with open(f_loc,'r') as hash_file:
         first_line = True
         for line in hash_file.readlines():
             if first_line:
