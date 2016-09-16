@@ -295,8 +295,8 @@ with open(f_loc,'w') as logfile:
                 so = so[0:3]
             so = so+'.'
             tweet_str = '$%s B1: %s %s for %s from %s.\n'\
-                        % (_out[j][1][:-3],so,_out[j][5],\
-                        _out[j][6],_out[j][0])
+                        % (moni_str,so,_out[0][5],\
+                        _out[0][6],_out[0][0])
             if len(tweet_str)>112:
                 tweet_str = tweet_str[:105]+'...\n'+_out[j][7]
             else:
