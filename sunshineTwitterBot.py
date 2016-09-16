@@ -282,18 +282,25 @@ with open(f_loc,'w') as logfile:
                 report['report_id'],
                 report['report_url'],
                 report['report_date'])
+            moni = 0
             for j in range(len(_out)):
-                so = _out[j][4].lower()[0:4]
-                if so[0] == 'o':
-                    so = so[0:3]
-                so = so+'.'
-                tweet_str = '%s B1: %s %s for %s from %s.\n'\
-                            % (_out[j][1][:-3],so,_out[j][5],\
-                            _out[j][6],_out[j][0])
-                if len(tweet_str)>112:
-                    tweet_str = tweet_str[:105]+'...\n'+_out[j][7]
-                else:
-                    tweet_str = tweet_str+_out[j][7]
+                moni = moni + float(_out[j][1][:-3].strip('$').replace(',',''))
+            moni_str = '%s' % (moni)
+            if len(moni_str) > 6:
+                moni_str = moni_str[:-6]+','+moni_str[-6:-3]+','+moni_str[-3:]
+            elif len(moni_str) > 3:
+                moni_str = moni_str[:-3]+','+moni_str[-3:]
+            so = _out[j][4].lower()[0:4]
+            if so[0] == 'o':
+                so = so[0:3]
+            so = so+'.'
+            tweet_str = '$%s B1: %s %s for %s from %s.\n'\
+                        % (_out[j][1][:-3],so,_out[j][5],\
+                        _out[j][6],_out[j][0])
+            if len(tweet_str)>112:
+                tweet_str = tweet_str[:105]+'...\n'+_out[j][7]
+            else:
+                tweet_str = tweet_str+_out[j][7]
             tweet_str = tweet_str.encode('utf-8')
             logfile.write(tweet_str+'\n')
             try:
