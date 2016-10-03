@@ -45,6 +45,14 @@ def scrape_reports_filed(reports_url=ISBE_REPORTS_FEED):
                 'http://www.elections.il.gov/CampaignDisclosure/B1'):
             report_type = 'B1'
             report_id = parsed_url['FiledDocID'][0]
+        elif report_url.startswith(
+                'http://www.elections.il.gov/CampaignDisclosure/D2'):
+            report_type = 'D2'
+            report_id = f['summary'][:(indx-2)].strip(' ')
+        elif report_url.startswith(
+                'http://www.elections.il.gov/CampaignDisclosure/CDPdfViewer'):
+            report_type = 'PDF'
+            report_id = f['summary'][:(indx-2)].strip(' ')
         else:
             report_type = 'UNK'  # Unknown/unhandled report type
             report_id = -1
@@ -92,18 +100,22 @@ def scrape_a1(report_id, report_url, report_date):
     req = requests.get(report_url)
     soups = [BeautifulSoup(req.text,"html5lib")]
     rec_counts = soups[0].findAll('span',id='ctl00_ContentPlaceHolder1_lbRecordsInfo')[0]
-    n1 = int(rec_counts.contents[0].split(' ')[-3])
-    n2 = int(rec_counts.contents[0].split(' ')[-1])
-    page_count = n2/n1+(n2%n1>0)
-    for page in range(1,page_count+1):
-        if page == 1:
-            a1_list = _process_a1_page(soups,report_url,report_id,report_date)
-        else:
-            page_url = '%s&pageindex=%s' % (report_url,page_index(page,'a1'))
-            req = requests.get(page_url)
-            soups = [BeautifulSoup(req.text,"html5lib")]
-            a1 = _process_a1_page(soups,page_url,report_id,report_date)
-            a1_list = [a1_list[0],a1_list[1]+a1[1]]
+    rec_counts = soups[0].findAll('span',id='ctl00_ContentPlaceHolder1_lbRecordsInfo')[0]
+    if rec_counts.contents==[]:
+        a1_list=['empty']
+    else:
+        n1 = int(rec_counts.contents[0].split(' ')[-3])
+        n2 = int(rec_counts.contents[0].split(' ')[-1])
+        page_count = n2/n1+(n2%n1>0)
+        for page in range(1,page_count+1):
+            if page == 1:
+                a1_list = _process_a1_page(soups,report_url,report_id,report_date)
+            else:
+                page_url = '%s&pageindex=%s' % (report_url,page_index(page,'a1'))
+                req = requests.get(page_url)
+                soups = [BeautifulSoup(req.text,"html5lib")]
+                a1 = _process_a1_page(soups,page_url,report_id,report_date)
+                a1_list = [a1_list[0],a1_list[1]+a1[1]]
     return a1_list
     
         
@@ -252,6 +264,8 @@ with open(f_loc,'w') as logfile:
                 report['report_id'],
                 report['report_url'],
                 report['report_date'])
+            if _out[0]=='empty':
+                continue
             moni = 0
             for con in _out[1]:
                 moni = moni+float(con[1:].replace(',',''))
@@ -310,4 +324,10 @@ with open(f_loc,'w') as logfile:
                     bt.write(tweet_str+'\n')
                     for r in report:
                         print(str(r))
+        elif report['report_type'] == 'D2':
+            tweet_str = 'D2 filing from %s:\n%s' % (report['report_id'],report['report_url'])
+            t.statuses.update(status=tweet_str)            
+        elif report['report_type'] == 'PDF':
+            tweet_str = 'Paper filing for %s:\n%s' % (report['report_id'],report['report_url'])
+            t.statuses.update(status=tweet_str)
     logfile.write('\n\nexiting program')
