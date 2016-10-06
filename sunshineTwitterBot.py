@@ -300,6 +300,7 @@ with open(f_loc,'w') as logfile:
             for j in range(len(_out)):
                 moni = moni + float(_out[j][1][:-3].strip('$').replace(',',''))
             moni_str = '%s' % (moni)
+            moni_str = moni_str.split('.')[0]
             if len(moni_str) > 6:
                 moni_str = moni_str[:-6]+','+moni_str[-6:-3]+','+moni_str[-3:]
             elif len(moni_str) > 3:
