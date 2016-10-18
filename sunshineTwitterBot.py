@@ -319,7 +319,8 @@ with open(f_loc,'w') as logfile:
             tweet_str = tweet_str.encode('utf-8')
             logfile.write(tweet_str+'\n')
             try:
-                t.statuses.update(status=tweet_str)
+                #t.statuses.update(status=tweet_str)
+                continue
             except:
                 with open('bad_tweet.txt','w') as bt:
                     bt.write(tweet_str+'\n')
