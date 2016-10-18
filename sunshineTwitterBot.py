@@ -309,9 +309,10 @@ with open(f_loc,'w') as logfile:
             if so[0] == 'o':
                 so = so[0:3]
             so = so+'.'
-            tweet_str = '$%s B1: %s %s for %s from %s.\n'\
-                        % (moni_str,so,_out[0][5],\
-                        _out[0][6],_out[0][0])
+#            tweet_str = '$%s B1: %s %s for %s from %s.\n'\
+#                        % (moni_str,so,_out[0][5],\
+#                        _out[0][6],_out[0][0])
+            tweet_str = '$%s B1 filed by %s.\n'%(moni_str,_out[0][5])
             if len(tweet_str)>112:
                 tweet_str = tweet_str[:105]+'...\n'+_out[j][7]
             else:
@@ -319,7 +320,7 @@ with open(f_loc,'w') as logfile:
             tweet_str = tweet_str.encode('utf-8')
             logfile.write(tweet_str+'\n')
             try:
-                #t.statuses.update(status=tweet_str)
+                t.statuses.update(status=tweet_str)
                 continue
             except:
                 with open('bad_tweet.txt','w') as bt:
