@@ -312,7 +312,7 @@ with open(f_loc,'w') as logfile:
 #            tweet_str = '$%s B1: %s %s for %s from %s.\n'\
 #                        % (moni_str,so,_out[0][5],\
 #                        _out[0][6],_out[0][0])
-            tweet_str = '$%s B1 filed by %s.\n'%(moni_str,_out[0][5])
+            tweet_str = '$%s B1 filed by %s.\n'%(moni_str,_out[0][0])
             if len(tweet_str)>112:
                 tweet_str = tweet_str[:105]+'...\n'+_out[j][7]
             else:
